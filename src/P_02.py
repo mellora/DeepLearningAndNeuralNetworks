@@ -18,5 +18,16 @@ if __name__ == "__main__":
     # print(y)
     # print(x)
     # print(data[0][0].shape)
-    plt.imshow(data[0][0].view(28, 28))
-    plt.show()
+    # plt.imshow(data[0][0].view(28, 28))
+    # plt.show()
+    total = 0
+    counter_dict = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0}
+    for data in train_set:
+        Xs, Ys = data
+        for y in Ys:
+            counter_dict[int(y)] += 1
+            total += 1
+    print(counter_dict)
+    print(total)
+    for i in counter_dict:
+        print(f"{i}: {counter_dict[1] / total * 100}")
