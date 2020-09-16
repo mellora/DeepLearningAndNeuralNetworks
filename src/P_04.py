@@ -2,6 +2,7 @@ from abc import ABC
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
+import torch.optim as optim
 import torchvision
 from torchvision import transforms, datasets
 
@@ -34,7 +35,32 @@ class Net(nn.Module, ABC):
 
 if __name__ == "__main__":
     net = Net()
-    X = torch.rand((28, 28))
-    X = X.view(-1, 28 * 28)
-    output = net(X)
-    print(output)
+
+    optimizer = optim.Adam(net.parameters(), lr=0.001)  # lr=0.001 can also be lr=1e-3
+    
+    EPOCHS = 3
+
+    for epoch in range(EPOCHS):
+        for data in train_set:
+            # data is a batch of feature sets and Labels
+            X, y = data
+            net.zero_grad()
+            output = net(X.view(-1, 28 * 28))
+            # if output is a scalar value, use .nll_loss
+            # if output is a one hot vector, use .mse_loss
+            loss = func.nll_loss(output, y)
+            loss.backward()
+            optimizer.step()
+        print(loss)
+
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in train_set:
+            X, y = data
+            output = net(X.view(-1, 28 * 28))
+            for idx, i in enumerate(output):
+                if torch.argmax(i) == y[idx]:
+                    correct += 1
+                total += 1
+    print(f"Accuracy: {round(correct / total, 3)}")
