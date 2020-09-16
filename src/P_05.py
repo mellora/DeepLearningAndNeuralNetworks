@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from tqdm import tqdm  # Gives a progress bar
 
-REBUILD_DATA = True
+REBUILD_DATA = False
 
 
 class DogsVsCats:
@@ -42,3 +42,10 @@ if __name__ == "__main__":
     if REBUILD_DATA:
         dogs_v_cats = DogsVsCats()
         dogs_v_cats.make_training_data()
+    else:
+        training_data = np.load("training_data.npy", allow_pickle=True)
+        print(len(training_data))
+        print(training_data[1])
+        import matplotlib.pyplot as plt
+        plt.imshow(training_data[1][0], cmap="gray")
+        plt.show()
