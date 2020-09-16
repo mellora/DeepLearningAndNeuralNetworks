@@ -230,3 +230,4 @@ dmypy.json
 
 # Data from tutorial
 MNIST/
+PetImages/
