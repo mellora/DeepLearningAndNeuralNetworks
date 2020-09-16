@@ -231,3 +231,4 @@ dmypy.json
 # Data from tutorial
 MNIST/
 PetImages/
+src/training_data.npy
