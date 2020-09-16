@@ -31,14 +31,19 @@ class Net(nn.Module, ABC):
         x = func.relu(self.fc2(x))
         x = func.relu(self.fc3(x))
         x = self.fc4(x)
+        # dim=0 would be for distribution of batch, dim=1 is for the output itself.  Default to dim=1
+        return func.log_softmax(x, dim=1)
         # Following code works, but probably will not scale properly. Lacking activation function.
         # x = self.fc1(x)
         # x = self.fc2(x)
         # x = self.fc3(x)
         # x = self.fc4(x)
-        return x
+        # return x
 
 
 if __name__ == "__main__":
     net = Net()
-    print(net)
+    X = torch.rand((28, 28))
+    X = X.view(-1, 28 * 28)
+    output = net(X)
+    print(output)
