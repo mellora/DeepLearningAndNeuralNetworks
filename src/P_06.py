@@ -5,6 +5,7 @@ from tqdm import tqdm  # Gives a progress bar
 import torch
 import torch.nn as nn
 import torch.nn.functional as func
+import torch.optim as optim
 from abc import ABC
 
 REBUILD_DATA = False
@@ -83,3 +84,54 @@ if __name__ == "__main__":
     else:
         training_data = np.load("training_data.npy", allow_pickle=True)
         net = Net()
+
+        optimizer = optim.Adam(net.parameters(), lr=0.001)
+        loss_function = nn.MSELoss()
+
+        X = torch.Tensor([i[0] for i in training_data]).view(-1, 50, 50)
+        X = X / 255
+        Y = torch.Tensor([i[1] for i in training_data])
+
+        VAL_PCT = 0.1
+        val_size = int(len(X) * VAL_PCT)
+        # print(val_size)
+
+        train_X = X[:-val_size]
+        train_Y = Y[:-val_size]
+
+        test_X = X[-val_size:]
+        test_Y = Y[-val_size:]
+
+        # print(len(train_X))
+        # print(len(test_X))
+
+        BATCH_SIZE = 100    # Modify if memory issues happen
+        EPOCHS = 1
+
+        for epock in range(EPOCHS):
+            for i in tqdm(range(0, len(train_X), BATCH_SIZE)):
+                # print(i, i + BATCH_SIZE)
+                batch_X = train_X[i: i + BATCH_SIZE].view(-1, 1, 50, 50)
+                batch_Y = train_Y[i: i + BATCH_SIZE]
+
+                optimizer.zero_grad()
+                outputs = net(batch_X)
+                loss = loss_function(outputs, batch_Y)
+                loss.backward()
+                optimizer.step()
+
+        # print(loss)
+
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for i in tqdm(range(len(test_X))):
+                real_class = torch.argmax(test_Y[i])
+                net_out = net(test_X[i].view(-1, 1, 50, 50))[0]
+
+                predicted_class = torch.argmax(net_out)
+                if predicted_class == real_class:
+                    correct += 1
+                total += 1
+
+        print(f"Accuracy: {round(correct / total, 3)}")
