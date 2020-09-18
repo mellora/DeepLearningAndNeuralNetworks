@@ -6,13 +6,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as func
 import torch.optim as optim
+import time
 
 from abc import ABC  # Imported to remove warning for class inheritance
 
 REBUILD_DATA = False
-
-BATCH_SIZE = 100    # Modify if memory issues happen
-EPOCHS = 10
 
 
 class DogsVsCats:
@@ -113,6 +111,22 @@ def test(size=32):
     return val_acc, val_loss
 
 
+def train():
+    BATCH_SIZE = 100
+    EPOCHS = 5  # Normally 1 - 10
+
+    with open("model.log", "a") as f:
+        for epoch in range(EPOCHS):
+            for i in tqdm(range(0, len(train_X), BATCH_SIZE)):
+                batch_X = train_X[i:i+BATCH_SIZE].view(-1, 1, 50, 50).to(device)
+                batch_y = train_Y[i:i+BATCH_SIZE].to(device)
+
+                acc, loss = fwd_pass(batch_X, batch_y, train=True)
+                if i % 50 == 0:
+                    val_acc, val_loss = test(size=100)
+                    f.write(f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},{round(float(val_acc), 2)},{round(float(val_loss), 4)}\n")
+
+
 if __name__ == "__main__":
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -144,5 +158,10 @@ if __name__ == "__main__":
         test_Y = Y[-val_size:]
 
         # This is where the network is trained and tested
-        val_acc, val_loss = test(size=32)
-        print(f"Accuracy: {val_acc}\nLoss: {val_loss}")
+        # val_acc, val_loss = test(size=32)
+        # print(f"Accuracy: {val_acc}\nLoss: {val_loss}")
+
+        MODEL_NAME = f"model-{int(time.time())}"
+        print(MODEL_NAME)
+
+        train()
