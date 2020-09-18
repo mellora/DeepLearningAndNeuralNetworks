@@ -87,6 +87,32 @@ class Net(nn.Module, ABC):
         return func.softmax(x, dim=1)
 
 
+def fwd_pass(x, y, train=False):
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
+    loss_function = nn.MSELoss()
+
+    if train:
+        net.zero_grad()
+    outputs = net(x)
+    matches = [torch.argmax(i) == torch.argmax(j) for i, j in zip(outputs, y)]
+    acc = matches.count(True) / len(matches)
+    loss = loss_function(outputs, y)
+
+    if train:
+        loss.backward()
+        optimizer.step()
+
+    return acc, loss
+
+
+def test(size=32):
+    random_start = np.random.randint(len(test_X) - size)
+    x, y = test_X[random_start:random_start+size], test_Y[random_start:random_start+size]
+    with torch.no_grad():
+        val_acc, val_loss = fwd_pass(x.view(-1, 1, 50, 50).to(device), y.to(device))
+    return val_acc, val_loss
+
+
 if __name__ == "__main__":
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -118,3 +144,5 @@ if __name__ == "__main__":
         test_Y = Y[-val_size:]
 
         # This is where the network is trained and tested
+        val_acc, val_loss = test(size=32)
+        print(f"Accuracy: {val_acc}\nLoss: {val_loss}")
