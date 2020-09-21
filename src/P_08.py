@@ -86,9 +86,6 @@ class Net(nn.Module, ABC):
 
 
 def fwd_pass(x, y, train=False):
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
-    loss_function = nn.MSELoss()
-
     if train:
         net.zero_grad()
     outputs = net(x)
@@ -103,17 +100,21 @@ def fwd_pass(x, y, train=False):
     return acc, loss
 
 
+# def test(size=32):
+#     random_start = np.random.randint(len(test_X) - size)
+#     x, y = test_X[random_start:random_start+size], test_Y[random_start:random_start+size]
+#     with torch.no_grad():
+#         val_acc, val_loss = fwd_pass(x.view(-1, 1, 50, 50).to(device), y.to(device))
+#     return val_acc, val_loss
 def test(size=32):
-    random_start = np.random.randint(len(test_X) - size)
-    x, y = test_X[random_start:random_start+size], test_Y[random_start:random_start+size]
-    with torch.no_grad():
-        val_acc, val_loss = fwd_pass(x.view(-1, 1, 50, 50).to(device), y.to(device))
+    X, y = test_X[:size], test_Y[:size]
+    val_acc, val_loss = fwd_pass(X.view(-1, 1, 50, 50).to(device), y.to(device))
     return val_acc, val_loss
 
 
-def train():
+def train(net):
     BATCH_SIZE = 100
-    EPOCHS = 5  # Normally 1 - 10
+    EPOCHS = 30  # Normally 1 - 10
 
     with open("model.log", "a") as f:
         for epoch in range(EPOCHS):
@@ -124,7 +125,7 @@ def train():
                 acc, loss = fwd_pass(batch_X, batch_y, train=True)
                 if i % 50 == 0:
                     val_acc, val_loss = test(size=100)
-                    f.write(f"{MODEL_NAME},{round(time.time(), 3)},{round(float(acc), 2)},{round(float(loss), 4)},{round(float(val_acc), 2)},{round(float(val_loss), 4)}\n")
+                    f.write(f"{MODEL_NAME},{round(time.time(),3)},{round(float(acc),2)},{round(float(loss), 4)},{round(float(val_acc),2)},{round(float(val_loss),4)},{epoch}\n")
 
 
 if __name__ == "__main__":
@@ -139,29 +140,32 @@ if __name__ == "__main__":
         print("Building Data Set")
         dogs_v_cats = DogsVsCats()
         dogs_v_cats.make_training_data()
-    else:
-        print("Using Data Set")
-        training_data = np.load("training_data.npy", allow_pickle=True)
-        net = Net().to(device)
 
-        X = torch.Tensor([i[0] for i in training_data]).view(-1, 50, 50)
-        X = X / 255
-        Y = torch.Tensor([i[1] for i in training_data])
+    print("Using Data Set")
+    training_data = np.load("training_data.npy", allow_pickle=True)
+    net = Net().to(device)
 
-        VAL_PCT = 0.1
-        val_size = int(len(X) * VAL_PCT)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
+    loss_function = nn.MSELoss()
 
-        train_X = X[:-val_size]
-        train_Y = Y[:-val_size]
+    X = torch.Tensor([i[0] for i in training_data]).view(-1, 50, 50)
+    X = X / 255
+    Y = torch.Tensor([i[1] for i in training_data])
 
-        test_X = X[-val_size:]
-        test_Y = Y[-val_size:]
+    VAL_PCT = 0.1
+    val_size = int(len(X) * VAL_PCT)
 
-        # This is where the network is trained and tested
-        # val_acc, val_loss = test(size=32)
-        # print(f"Accuracy: {val_acc}\nLoss: {val_loss}")
+    train_X = X[:-val_size]
+    train_Y = Y[:-val_size]
 
-        MODEL_NAME = f"model-{int(time.time())}"
-        print(MODEL_NAME)
+    test_X = X[-val_size:]
+    test_Y = Y[-val_size:]
 
-        train()
+    # This is where the network is trained and tested
+    # val_acc, val_loss = test(size=32)
+    # print(f"Accuracy: {val_acc}\nLoss: {val_loss}")
+
+    MODEL_NAME = f"model-{int(time.time())}"
+    print(MODEL_NAME)
+
+    train(net)
